@@ -3,8 +3,8 @@
 Plugin Name: MakeMeHappy
 Plugin URI: http://blog.makemehappy.ro
 Description: Integrate your MakeMeHappy wishlists into WP
-Author: Andrei Daneasa
-Version: 0.1
+Author: MakeMeHappy
+Version: 0.2
 Author URI: http://mmh.ro/
 */
 
@@ -17,7 +17,63 @@ function show_content_MakeMeHappy($user, $list, $display, $pict, $desc)
 	
 	//if list, check list
 	
-	include('http://www.makemehappy.ro/Widgets/wordpress/'.$user.'/'.$list.'/'.$display.'/'.$pict.'/'.$desc);
+	//include('http://localhost/mmh2/Widgets/wordpress/'.$user.'/'.$list.'/'.$display.'/'.$pict.'/'.$desc);
+	
+	$base_url='http://www.makemehappy.ro/';
+	$doc=new DOMDocument();
+	$doc->load($base_url."Widgets/wordpress/".$user."/".$list);
+	
+	$listname = $doc->getElementsByTagName("description");
+	$listname = $listname->item(0)->nodeValue;
+	$link = $doc->getElementsByTagName("link");
+	$link = $link->item(0)->nodeValue;
+	echo '<p><a href="'.$link.'" target="_blank">'.$listname.'</a></p><br>';
+	
+	$gifts = $doc->getElementsByTagName("item");
+	$cnt=0;
+	foreach($gifts as $gift){
+		if ($cnt<$display) {
+			if ($pict==1) {
+				$gift_pict = $gift->getElementsByTagName("image");
+				$gift_pict = $gift_pict->item(0)->nodeValue;
+				if($gift_pict!="") 
+					echo '<a href="'.$base_url.'uploads/gifts/'.ereg_replace('_thumb', '',$gift_pict).'">';
+				echo '<img src="'.$base_url.'uploads/gifts/'.$gift_pict.'" width="50" height="50" border="1" align="left" style="margin-right:5px; border-color:#666666;" />';
+				if($gift_pict!="") 
+					echo '</a>';
+			}
+			$gift_title = $gift->getElementsByTagName("title");
+			$gift_title = $gift_title->item(0)->nodeValue;
+	        echo '<h4><a href="'.$base_url.$user.'/'.$list.'" class="blue" target="_blank">'.$gift_title.'</a></h4>';
+			
+			$gift_price = $gift->getElementsByTagName("price");
+			$gift_price = $gift_price->item(0)->nodeValue;
+			echo '<p>Costa: <strong><span>'.$gift_price.'</span></strong></p>';
+			
+			$gift_link = $gift->getElementsByTagName("link");
+			$gift_link = $gift_link->item(0)->nodeValue;
+	        if (!empty($gift_link)) {
+				echo '<p>Il gasesti la: <strong><a href="'.$gift_link.'" target="_blank">';
+				$idx1=strpos($gift_link, '//');
+				$idx2=strpos($gift_link, '/', $idx1+2);
+				if ($idx1===false) $idx1=-2;
+				if ($idx2===false) $idx2=strlen($gift_link);
+				echo substr($gift_link, $idx1+2, $idx2-$idx1-2);
+				echo '</a></strong></p>';
+			}
+			
+			if ($desc==1) {
+				$gift_desc = $gift->getElementsByTagName("description");
+				$gift_desc = $gift_desc->item(0)->nodeValue;
+				echo '<p><strong>Descriere: </strong>'.substr($gift_desc, 0,50);
+				if(strlen($gift_desc)>50) 
+					echo '<a href="'.$base_url.$username.'/'.$list.'" class="blue" target="_blank">[mai mult]</a>';
+			}
+			echo '<div style="display:block; height:1px; background-color:#dddddd; overflow:hidden;"></div>';
+		}
+		$cnt++;
+	}
+	
   }
 }
 
